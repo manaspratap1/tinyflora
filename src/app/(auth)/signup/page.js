@@ -1,18 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "../login/page.module.css";
 
 export default function SignupPage() {
   const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Guard: If already logged in, redirect away from signup page
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            if (data.user.role === "ADMIN") {
+              router.replace("/admin");
+            } else {
+              router.replace("/shop");
+            }
+            return;
+          }
+        }
+      } catch {
+        // Not logged in
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+    checkSession();
+  }, [router]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -32,13 +58,26 @@ export default function SignupPage() {
         throw new Error(data.message || "Failed to create account");
       }
 
-      router.push("/shop");
-      router.refresh();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("auth-changed"));
+      }
+
+      router.replace("/shop");
     } catch (err) {
       setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkingAuth) {
+    return (
+      <main className={styles.page}>
+        <div style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>
+          Verifying session...
+        </div>
+      </main>
+    );
   }
 
   return (

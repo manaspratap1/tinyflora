@@ -147,7 +147,7 @@ export default function AdminPage() {
   useEffect(() => {
     async function verifyAuth() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (data.user && data.user.role === "ADMIN") {

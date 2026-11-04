@@ -7,32 +7,36 @@ import styles from "./page.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Guard: If already logged in, redirect away from login page
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (data.user) {
-            setCurrentUser(data.user);
+            if (data.user.role === "ADMIN") {
+              router.replace("/admin");
+            } else {
+              router.replace("/shop");
+            }
+            return;
           }
         }
       } catch {
-        // Not logged in or server offline
+        // Not logged in
       } finally {
         setCheckingAuth(false);
       }
     }
     checkSession();
-  }, []);
+  }, [router]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -52,15 +56,16 @@ export default function LoginPage() {
         throw new Error(data.message || "Failed to log in");
       }
 
-      setCurrentUser(data.user);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("auth-changed"));
+      }
 
       // Route admin users straight to /admin dashboard, customers to /shop
       if (data.user.role === "ADMIN") {
-        router.push("/admin");
+        router.replace("/admin");
       } else {
-        router.push("/shop");
+        router.replace("/shop");
       }
-      router.refresh();
     } catch (err) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -68,47 +73,11 @@ export default function LoginPage() {
     }
   }
 
-  async function handleLogout() {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      setCurrentUser(null);
-      router.refresh();
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
-  }
-
   if (checkingAuth) {
     return (
       <main className={styles.page}>
-        <p>Checking authentication...</p>
-      </main>
-    );
-  }
-
-  if (currentUser) {
-    const isAdmin = currentUser.role === "ADMIN";
-    return (
-      <main className={styles.page}>
-        <div className={styles.loggedInCard}>
-          <p className={styles.eyebrow}>{isAdmin ? "Administrator Portal" : "Customer Account"}</p>
-          <h1 className={styles.title}>Hello, {currentUser.name}</h1>
-          <p>Signed in as {currentUser.email}</p>
-
-          <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", marginBottom: "1.5rem" }}>
-            {isAdmin && (
-              <Link href="/admin" className={styles.button} style={{ background: "var(--forest)" }}>
-                Open Admin Dashboard →
-              </Link>
-            )}
-            <Link href="/shop" className={styles.button} style={{ background: "transparent", color: "var(--forest)", border: "1px solid var(--forest)" }}>
-              Go to Shop
-            </Link>
-          </div>
-
-          <button type="button" onClick={handleLogout} className={styles.button} style={{ background: "#fdf2f2", color: "#991b1b" }}>
-            Log out
-          </button>
+        <div style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>
+          Verifying session...
         </div>
       </main>
     );
@@ -116,19 +85,19 @@ export default function LoginPage() {
 
   return (
     <main className={styles.page}>
-      <p className={styles.eyebrow}>Sign In</p>
-      <h1 className={styles.title}>Welcome back</h1>
+      <p className={styles.eyebrow}>Customer &amp; Management Portal</p>
+      <h1 className={styles.title}>Sign in to your account</h1>
 
       {error && <div className={styles.errorBanner}>{error}</div>}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <label className={styles.label}>
-          Email address or username
+          Email address
           <input
             type="text"
             required
             autoComplete="username"
-            placeholder="you@example.com or 'demo'"
+            placeholder="hello@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={styles.input}
@@ -149,16 +118,16 @@ export default function LoginPage() {
         </label>
 
         <button type="submit" disabled={loading} className={styles.button}>
-          {loading ? "Signing in..." : "Continue →"}
+          {loading ? "Signing in..." : "Sign In"}
         </button>
-
-        <p className={styles.switchText}>
-          Don&apos;t have an account?
-          <Link href="/signup" className={styles.switchLink}>
-            Sign up
-          </Link>
-        </p>
       </form>
+
+      <div className={styles.switchAuth}>
+        <span>Don&apos;t have an account? </span>
+        <Link href="/signup" className={styles.switchLink}>
+          Create account
+        </Link>
+      </div>
     </main>
   );
 }

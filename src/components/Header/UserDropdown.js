@@ -1,35 +1,51 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import styles from "./Header.module.css";
 
-export default function UserDropdown() {
+function UserDropdownInner() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    async function checkAuth() {
+    let isMounted = true;
+    async function verifySession() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (!isMounted) return;
         if (res.ok) {
           const data = await res.json();
-          if (data.user) {
-            setUser(data.user);
-          }
+          setUser(data.user || null);
+        } else {
+          setUser(null);
         }
       } catch {
-        // Guest mode
+        if (isMounted) setUser(null);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
-    checkAuth();
-  }, []);
+
+    verifySession();
+
+    function handleAuthEvent() {
+      verifySession();
+    }
+    window.addEventListener("auth-changed", handleAuthEvent);
+    window.addEventListener("focus", handleAuthEvent);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("auth-changed", handleAuthEvent);
+      window.removeEventListener("focus", handleAuthEvent);
+    };
+  }, [pathname]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -47,6 +63,9 @@ export default function UserDropdown() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("auth-changed"));
+      }
       router.push("/shop");
       router.refresh();
     } catch (err) {
@@ -57,9 +76,17 @@ export default function UserDropdown() {
   if (loading) {
     return (
       <div className={styles.iconLink}>
-        <svg className={styles.iconSvg} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
+        <svg
+          className={styles.iconSvg}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
         </svg>
       </div>
     );
@@ -69,23 +96,32 @@ export default function UserDropdown() {
   if (!user) {
     return (
       <Link href="/login" className={styles.iconLink} aria-label="Sign In or Account">
-        <svg className={styles.iconSvg} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
+        <svg
+          className={styles.iconSvg}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
         </svg>
       </Link>
     );
   }
 
   // Calculate initials from name (e.g. "Jane Doe" -> "JD")
-  const initials = user.name
+  const initials = (user.name && user.name.trim())
     ? user.name
-        .split(" ")
+        .trim()
+        .split(/\s+/)
         .filter(Boolean)
         .map((n) => n[0].toUpperCase())
         .slice(0, 2)
         .join("")
-    : user.email[0].toUpperCase();
+    : (user.email ? user.email[0].toUpperCase() : "U");
 
   const isAdmin = user.role === "ADMIN";
 
@@ -104,8 +140,9 @@ export default function UserDropdown() {
       {isOpen && (
         <div className={styles.userDropdownMenu}>
           <div className={styles.dropdownHeader}>
-            <div className={styles.dropdownName}>{user.name}</div>
+            <div className={styles.dropdownName}>{user.name || "My Account"}</div>
             <div className={styles.dropdownEmail}>{user.email}</div>
+            {isAdmin && <span className={styles.adminPill}>Admin</span>}
           </div>
 
           <div className={styles.dropdownDivider} />
@@ -125,7 +162,8 @@ export default function UserDropdown() {
               className={styles.dropdownItem}
               onClick={() => setIsOpen(false)}
             >
-              Dashboard
+              <span>Dashboard</span>
+              <span style={{ fontSize: "12px", opacity: 0.7 }}>↗</span>
             </Link>
           )}
 
@@ -141,5 +179,32 @@ export default function UserDropdown() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function UserDropdown() {
+  return (
+    <Suspense
+      fallback={
+        <div className={styles.userDropdownContainer}>
+          <div className={styles.avatarButton} aria-label="Account">
+            <svg
+              className={styles.iconSvg}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+        </div>
+      }
+    >
+      <UserDropdownInner />
+    </Suspense>
   );
 }

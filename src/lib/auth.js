@@ -87,13 +87,46 @@ export function verifyToken(token) {
 }
 
 /**
+ * Helper to determine if a request is running over HTTPS.
+ * Respects reverse proxies (like Nginx on EC2) via x-forwarded-proto.
+ */
+export function isHttpsRequest(request) {
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (!request) return false;
+  const proto = request.headers?.get?.("x-forwarded-proto");
+  if (proto === "https") return true;
+  if (request.nextUrl?.protocol === "https:") return true;
+  return false;
+}
+
+/**
  * Extract authenticated user payload from incoming request cookies
  */
 export function getAuthUser(request) {
-  const cookieHeader = request.headers.get("cookie") || "";
-  const match = cookieHeader.match(/auth_token=([^;]+)/);
-  if (!match) return null;
-  return verifyToken(match[1]);
+  if (!request) return null;
+  let token = null;
+
+  // 1. Check NextRequest cookies object
+  if (request.cookies && typeof request.cookies.get === "function") {
+    const c = request.cookies.get("auth_token");
+    if (c) token = typeof c === "string" ? c : c.value;
+  }
+
+  // 2. Fallback to raw Cookie header
+  if (!token && request.headers) {
+    const cookieHeader = request.headers.get("cookie") || "";
+    const match = cookieHeader.match(/(?:^|;\s*)auth_token=([^;]+)/);
+    if (match) {
+      try {
+        token = decodeURIComponent(match[1].trim());
+      } catch {
+        token = match[1].trim();
+      }
+    }
+  }
+
+  if (!token) return null;
+  return verifyToken(token);
 }
 
 /**

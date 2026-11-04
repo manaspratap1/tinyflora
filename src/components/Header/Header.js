@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import CartBadge from "./CartBadge";
 import UserDropdown from "./UserDropdown";
@@ -25,7 +26,9 @@ export default function Header() {
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
         </Link>
-        <UserDropdown />
+        <Suspense fallback={null}>
+          <UserDropdown />
+        </Suspense>
         <CartBadge />
       </div>
     </header>

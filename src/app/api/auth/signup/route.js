@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { hashPassword, createToken } from "@/lib/auth";
+import { hashPassword, createToken, isHttpsRequest } from "@/lib/auth";
 
 export async function POST(request) {
   try {
@@ -74,9 +74,11 @@ export async function POST(request) {
         { status: 201 }
       );
 
+      const isSecure = isHttpsRequest(request);
+
       response.cookies.set("auth_token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecure,
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 7,

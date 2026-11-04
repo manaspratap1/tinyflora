@@ -176,3 +176,33 @@
 
 - **ESLint:** 0 errors, 0 warnings across all files in `src/`.
 - **Next.js Production Build:** Webpack compilation and static prerendering verified for all 25 routes.
+
+---
+
+## 7. Authentication, Session Handling & Production EC2 Access
+
+### Root Cause Analysis of EC2 "Restricted Access" Bug
+1. **Plain HTTP vs. `Secure` Cookie Flag:**
+   - In production on EC2 without an active SSL/TLS certificate (accessed via `http://<ec2-ip>:3000` or raw IP), setting `secure: process.env.NODE_ENV === "production"` caused the browser to enforce RFC 6265bis strict cookie policies.
+   - Per RFC 6265bis, modern web browsers **silently reject** cookies bearing the `Secure` attribute when received over an unencrypted plain HTTP connection.
+   - Consequently, the browser never saved the `auth_token` cookie. Subsequent requests to `/api/auth/me` or `/admin` transmitted no credentials, causing `getAuthUser` to return `null` and locking the admin out with a "Restricted Access" screen.
+   - **Resolution:** Introduced dynamic HTTPS request protocol detection via `isHttpsRequest(request)` in [`src/lib/auth.js`](file:///d:/microgreen-ecom/website/src/lib/auth.js). It checks `x-forwarded-proto === "https"`, `request.nextUrl.protocol === "https:"`, and optional explicit override `process.env.COOKIE_SECURE === "true"`. This guarantees cookies are accepted when accessed directly via EC2 HTTP while preserving full SSL security when placed behind an HTTPS reverse proxy (e.g. Nginx with Let's Encrypt).
+
+### Header User Initials & Dropdown Fix
+2. **Dynamic Session Sync & Header Re-render:**
+   - The user initials dropdown in [`src/components/Header/UserDropdown.js`](file:///d:/microgreen-ecom/website/src/components/Header/UserDropdown.js) previously fetched `/api/auth/me` only once on mount. During Next.js client-side route transitions, the root `Header` is not remounted, causing the guest state to remain cached.
+   - Added active session verification on `pathname` change, as well as listeners for window `"auth-changed"` and `"focus"` events.
+   - Added `{ cache: "no-store" }` and `Cache-Control: no-store, no-cache, must-revalidate` to `/api/auth/me` to prevent browser HTTP caching of guest status.
+   - Ensured the dropdown displays user name, email, role badge, a non-responsive "My Profile" link, an admin "Dashboard" button (if role is `ADMIN`), and an active "Log out" action that clears the cookie and broadcasts the session update.
+
+### Auth Route Guards
+3. **Guarding `/login` and `/signup` from Authenticated Access:**
+   - Added automated mount-time session verification to both [`src/app/(auth)/login/page.js`](file:///d:/microgreen-ecom/website/src/app/(auth)/login/page.js) and [`src/app/(auth)/signup/page.js`](file:///d:/microgreen-ecom/website/src/app/(auth)/signup/page.js).
+   - If an authenticated session is detected, administrators are immediately redirected to `/admin` and customer accounts to `/shop`. Authenticated users can no longer view or re-submit the login or signup forms.
+
+### Seeding Dual Admin Accounts
+4. **Credential Provisioning in `prisma/seed.js`:**
+   - Configured idempotent seeding for both:
+     - Primary Admin: `manas@gmail.com` with password `adbYVIUawo2375` (or custom overrides from `.env`).
+     - Test Admin: `demo` with password `demo`.
+   - Both accounts are automatically created with `Role.ADMIN` and full dashboard access.
