@@ -1,0 +1,262 @@
+.header {
+  min-height: 88px;
+  padding: 0 7%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  background: var(--ivory);
+  border-bottom: 1px solid #e7e5da;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--forest);
+  font-family: Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.brandIcon {
+  color: var(--green);
+  font-size: 26px;
+}
+
+.navigation,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.navigation a,
+.actions a {
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.navigation a:hover,
+.actions a:hover {
+  color: #82936e;
+}
+
+.actions {
+  gap: 20px;
+}
+
+.iconLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--forest);
+  transition: transform 0.15s ease, color 0.2s ease;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.iconLink:hover {
+  color: var(--green);
+  transform: scale(1.08);
+}
+
+.iconSvg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2;
+}
+
+.cart {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--forest);
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.cart:hover {
+  color: var(--green);
+  transform: scale(1.05);
+}
+
+.cartCountBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--forest);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* User Avatar Dropdown */
+.userDropdownContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.userAvatarBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--forest);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background-color 0.2s ease;
+}
+
+.userAvatarBtn:hover {
+  background: var(--green);
+  transform: scale(1.06);
+}
+
+.userDropdownMenu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 230px;
+  background: white;
+  border: 1px solid #dde4d4;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 0.75rem 0;
+  z-index: 100;
+}
+
+.dropdownHeader {
+  padding: 0.5rem 1rem 0.75rem;
+}
+
+.dropdownName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--forest);
+}
+
+.dropdownEmail {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adminPill {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 7px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  color: #166534;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: #f0f3eb;
+  margin: 0.4rem 0;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dropdownItem:hover {
+  background: #f8faf6;
+  color: var(--forest);
+}
+
+.dropdownStaticItem {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: default;
+  opacity: 0.75;
+}
+
+.dropdownLogout {
+  color: #991b1b;
+}
+
+.dropdownLogout:hover {
+  background: #fdf2f2;
+  color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+  .header {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px 5%;
+  }
+
+  .navigation {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    gap: 18px;
+  }
+
+  .brand {
+    font-size: 18px;
+  }
+
+  .navigation {
+    gap: 15px;
+  }
+
+  .navigation a {
+    font-size: 12px;
+  }
+
+  .actions {
+    gap: 16px;
+  }
+
+  .iconSvg {
+    width: 20px;
+    height: 20px;
+  }
+}

@@ -1,0 +1,251 @@
+.page {
+  min-height: 100vh;
+  background: var(--cream);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 18px;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.banner {
+  padding: 85px 8%;
+  background: var(--ivory);
+  text-align: center;
+}
+
+.banner h1 {
+  margin: 0;
+  color: var(--forest);
+  font-family: Georgia, serif;
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 400;
+}
+
+.banner p {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.content {
+  padding: 75px 8%;
+}
+
+.heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 35px;
+}
+
+.heading h2 {
+  margin: 0;
+  color: var(--forest);
+  font-family: Georgia, serif;
+  font-size: 36px;
+  font-weight: 400;
+}
+
+.heading > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 25px;
+}
+
+.emptyState {
+  padding: 70px 20px;
+  text-align: center;
+  background: white;
+}
+
+.emptyState h3 {
+  color: var(--forest);
+  font-family: Georgia, serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.emptyState p {
+  color: var(--muted);
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 15px;
+  color: var(--green);
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .productGrid {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 600px) {
+  .banner {
+    padding: 65px 6%;
+  }
+
+  .content {
+    padding: 55px 6%;
+  }
+
+  .heading h2 {
+    font-size: 29px;
+  }
+
+  .productGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Shop filters */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.searchInput {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.filterSelect {
+  flex: 0 1 170px;
+}
+
+.priceInput {
+  flex: 0 1 95px;
+  width: 95px;
+  min-width: 0;
+}
+
+.searchInput,
+.filterSelect,
+.priceInput {
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid #deded3;
+  border-radius: 4px;
+  background: #fff;
+  color: var(--forest);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.searchInput:focus,
+.filterSelect:focus,
+.priceInput:focus {
+  border-color: var(--green);
+}
+
+.clearButton {
+  padding: 12px 15px;
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--green);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.clearButton:hover {
+  background: var(--green);
+  color: white;
+}
+
+.loadingState,
+.errorState {
+  padding: 65px 20px;
+  text-align: center;
+  background: white;
+  color: var(--muted);
+}
+
+.errorState button {
+  margin-top: 10px;
+  padding: 10px 16px;
+  border: 0;
+  background: var(--green);
+  color: white;
+  cursor: pointer;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  margin-top: 45px;
+  color: var(--forest);
+  font-size: 13px;
+}
+
+.pagination button {
+  padding: 11px 18px;
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--green);
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination button:not(:disabled):hover {
+  background: var(--green);
+  color: white;
+}
+
+.emptyState .clearButton {
+  display: block;
+  margin: 15px auto 0;
+}
+
+@media (max-width: 600px) {
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .searchInput {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .filterSelect,
+  .priceInput {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .clearButton {
+    grid-column: 1 / -1;
+  }
+
+  .pagination {
+    gap: 12px;
+  }
+
+  .pagination button {
+    padding: 10px 12px;
+  }
+}

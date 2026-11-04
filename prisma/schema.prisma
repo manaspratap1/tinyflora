@@ -1,0 +1,186 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @db.VarChar(255)
+  name         String    @db.VarChar(120)
+  phone        String?   @db.VarChar(30)
+  role         Role      @default(CUSTOMER)
+
+  cart         Cart?
+  orders       Order[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @db.VarChar(100)
+  description String?   @db.Text
+
+  products    Product[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("category")
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(150)
+  description String?     @db.Text
+  price       Decimal     @db.Decimal(10, 2)
+  weight      String?     @db.VarChar(50)
+  image       String?     @db.VarChar(500)
+  stock       Int         @default(0)
+  isActive    Boolean     @default(true)
+  isFeatured  Boolean     @default(false)
+
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+  @@map("product")
+}
+
+model Cart {
+  id          Int        @id @default(autoincrement())
+  userId      Int?       @unique
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestToken  String?    @unique @db.VarChar(128)
+
+  items       CartItem[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([guestToken])
+  @@map("carts")
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  quantity  Int      @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  orderNumber     String      @unique @db.VarChar(50)
+
+  userId          Int?
+  user            User?       @relation(fields: [userId], references: [id])
+
+  customerName    String      @db.VarChar(150)
+  customerEmail   String      @db.VarChar(255)
+  customerPhone   String      @db.VarChar(30)
+  shippingAddress String      @db.Text
+
+  subtotal        Decimal     @db.Decimal(10, 2)
+  shippingFee     Decimal     @db.Decimal(10, 2) @default(0.00)
+  total           Decimal     @db.Decimal(10, 2)
+
+  status          OrderStatus @default(PENDING)
+
+  items           OrderItem[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+
+  name      String   @db.VarChar(150)
+  price     Decimal  @db.Decimal(10, 2)
+  quantity  Int
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model StoreSettings {
+  id                    Int      @id @default(autoincrement())
+  storeName             String   @default("Tiny Flora Microgreens") @map("store_name") @db.VarChar(150)
+  contactEmail          String   @default("hello@tinyflora.com") @map("contact_email") @db.VarChar(255)
+  contactPhone          String   @default("+91XXXXXXXXXX") @map("contact_phone") @db.VarChar(30)
+  whatsappNumber        String   @default("+91XXXXXXXXXX") @map("whatsapp_number") @db.VarChar(30)
+  address               String   @default("Lucknow, Uttar Pradesh") @db.Text
+  instagramUrl          String?  @default("") @map("instagram_url") @db.VarChar(255)
+  facebookUrl           String?  @default("") @map("facebook_url") @db.VarChar(255)
+  deliveryCharge        Decimal  @default(40.00) @map("delivery_charge") @db.Decimal(10, 2)
+  freeDeliveryThreshold Decimal  @default(499.00) @map("free_delivery_threshold") @db.Decimal(10, 2)
+  currency              String   @default("INR") @db.VarChar(10)
+  announcementText      String?  @default("Fresh harvest available!") @map("announcement_text") @db.VarChar(255)
+  businessHours         String?  @default("Mon - Sat: 9:00 AM - 7:00 PM") @map("business_hours") @db.VarChar(150)
+  minimumOrderAmount    Decimal  @default(0.00) @map("minimum_order_amount") @db.Decimal(10, 2)
+  deliveryInformation   String?  @default("Same-day harvest & delivery within 24-48 hours.") @map("delivery_information") @db.Text
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("store_settings")
+}
