@@ -42,6 +42,16 @@ export default function AdminPage() {
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // Mobile sidebar drawer state
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  function navigateTab(tab, stock = null, settings = null) {
+    if (tab) setActiveTab(tab);
+    if (stock) setStockFilter(stock);
+    if (settings) setSettingsTab(settings);
+    setIsMobileSidebarOpen(false);
+  }
+
   // Catalog state - on-demand paged data from real backend
   const [products, setProducts] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -141,6 +151,29 @@ export default function AdminPage() {
     }
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // Prevent background scroll when mobile sidebar drawer is open
+  useEffect(() => {
+    if (isMobileSidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileSidebarOpen]);
+
+  // Auto-close mobile drawer if window is resized to desktop width
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth > 950) {
+        setIsMobileSidebarOpen(false);
+      }
+    }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Verify Admin Authentication
@@ -915,6 +948,7 @@ export default function AdminPage() {
   }
 
   async function handleLogout() {
+    setIsMobileSidebarOpen(false);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       router.push("/login");
@@ -980,19 +1014,42 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Left Sidebar - Fixed Size & Non-Scrollable */}
-      <aside className={styles.sidebar}>
+      {/* Mobile Backdrop Overlay */}
+      {isMobileSidebarOpen && (
+        <div
+          className={styles.mobileBackdrop}
+          onClick={() => setIsMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Left Sidebar - Fixed Size on Desktop & Slide-out Drawer on Mobile/Tablet */}
+      <aside className={`${styles.sidebar} ${isMobileSidebarOpen ? styles.sidebarOpen : ""}`}>
         {/* Brand with Admin SVG and Tinyflora */}
-        <Link href="/" className={styles.sidebarBrand}>
-          <div className={styles.sidebarBrandIcon}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <span>Tinyflora</span>
-        </Link>
+        <div className={styles.sidebarHeader}>
+          <Link
+            href="/"
+            className={styles.sidebarBrand}
+            onClick={() => setIsMobileSidebarOpen(false)}
+          >
+            <div className={styles.sidebarBrandIcon}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <span>Tinyflora</span>
+          </Link>
+          <button
+            type="button"
+            className={styles.sidebarCloseBtn}
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="Close navigation"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
 
         {/* Sidebar Navigation */}
         <nav className={styles.sidebarNav}>
@@ -1014,24 +1071,21 @@ export default function AdminPage() {
               <div className={styles.treeBranchNav}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveTab("products");
-                    setStockFilter("all");
-                  }}
+                  onClick={() => navigateTab("products", "all")}
                   className={`${styles.treeBranchItem} ${activeTab === "products" && stockFilter === "all" ? styles.treeBranchItemActive : ""}`}
                 >
                   Store Management
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("categories")}
+                  onClick={() => navigateTab("categories")}
                   className={`${styles.treeBranchItem} ${activeTab === "categories" ? styles.treeBranchItemActive : ""}`}
                 >
                   Categories
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("orders")}
+                  onClick={() => navigateTab("orders")}
                   className={`${styles.treeBranchItem} ${activeTab === "orders" ? styles.treeBranchItemActive : ""}`}
                 >
                   Order Management
@@ -1041,6 +1095,7 @@ export default function AdminPage() {
                   onClick={() => {
                     setMessage({ type: "success", text: "Analytics: 142 visits today. Feature in setup." });
                     setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+                    setIsMobileSidebarOpen(false);
                   }}
                   className={styles.treeBranchItem}
                 >
@@ -1051,6 +1106,7 @@ export default function AdminPage() {
                   onClick={() => {
                     setMessage({ type: "success", text: "Reports module is being configured." });
                     setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+                    setIsMobileSidebarOpen(false);
                   }}
                   className={styles.treeBranchItem}
                 >
@@ -1078,20 +1134,14 @@ export default function AdminPage() {
               <div className={styles.treeBranchNav}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveTab("products");
-                    setStockFilter("all");
-                  }}
+                  onClick={() => navigateTab("products", "all")}
                   className={`${styles.treeBranchItem} ${activeTab === "products" && stockFilter === "all" ? styles.treeBranchItemActive : ""}`}
                 >
                   Current stock
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveTab("products");
-                    setStockFilter("low");
-                  }}
+                  onClick={() => navigateTab("products", "low")}
                   className={`${styles.treeBranchItem} ${stockFilter === "low" ? styles.treeBranchItemActive : ""}`}
                 >
                   <span>Low-stock products</span>
@@ -1127,7 +1177,7 @@ export default function AdminPage() {
               <div className={styles.treeBranchNav}>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("customers")}
+                  onClick={() => navigateTab("customers")}
                   className={`${styles.treeBranchItem} ${activeTab === "customers" ? styles.treeBranchItemActive : ""}`}
                 >
                   <span>Customer details</span>
@@ -1135,14 +1185,14 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("customers")}
+                  onClick={() => navigateTab("customers")}
                   className={styles.treeBranchItem}
                 >
                   <span>Order history</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("customers")}
+                  onClick={() => navigateTab("customers")}
                   className={styles.treeBranchItem}
                 >
                   <span>Total purchases</span>
@@ -1173,7 +1223,7 @@ export default function AdminPage() {
               <div className={styles.treeBranchNav}>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("orders")}
+                  onClick={() => navigateTab("orders")}
                   className={`${styles.treeBranchItem} ${activeTab === "orders" ? styles.treeBranchItemActive : ""}`}
                 >
                   All Orders
@@ -1204,7 +1254,7 @@ export default function AdminPage() {
               type="button"
               onClick={() => {
                 setIsSettingsOpen(!isSettingsOpen);
-                setActiveTab("settings");
+                navigateTab("settings");
               }}
               className={`${styles.navItem} ${activeTab === "settings" ? styles.navItemActive : ""}`}
             >
@@ -1219,10 +1269,7 @@ export default function AdminPage() {
               <div className={styles.treeBranchNav}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveTab("settings");
-                    setSettingsTab("general");
-                  }}
+                  onClick={() => navigateTab("settings", null, "general")}
                   className={`${styles.treeBranchItem} ${activeTab === "settings" && settingsTab === "general" ? styles.treeBranchItemActive : ""}`}
                 >
                   <span>Store details</span>
@@ -1230,10 +1277,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveTab("settings");
-                    setSettingsTab("contact");
-                  }}
+                  onClick={() => navigateTab("settings", null, "contact")}
                   className={`${styles.treeBranchItem} ${activeTab === "settings" && settingsTab === "contact" ? styles.treeBranchItemActive : ""}`}
                 >
                   <span>Contact information</span>
@@ -1241,10 +1285,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveTab("settings");
-                    setSettingsTab("products");
-                  }}
+                  onClick={() => navigateTab("settings", null, "products")}
                   className={`${styles.treeBranchItem} ${activeTab === "settings" && settingsTab === "products" ? styles.treeBranchItemActive : ""}`}
                 >
                   <span>Delivery settings</span>
@@ -1262,7 +1303,12 @@ export default function AdminPage() {
             )}
           </div>
 
-          <Link href="/shop" className={styles.navItem} style={{ marginTop: "0.5rem" }}>
+          <Link
+            href="/shop"
+            className={styles.navItem}
+            style={{ marginTop: "0.5rem" }}
+            onClick={() => setIsMobileSidebarOpen(false)}
+          >
             <div className={styles.navItemLeft}>
               <span>↗</span>
               <span>View Storefront</span>
@@ -1298,17 +1344,40 @@ export default function AdminPage() {
         <div className={styles.mainCard}>
           {/* Top Header */}
           <header className={styles.topHeader}>
-            <h1 className={styles.pageTitle}>
-              {activeTab === "orders"
-                ? "Order Management"
-                : activeTab === "categories"
-                ? "Category Management"
-                : activeTab === "customers"
-                ? "Customer Management"
-                : activeTab === "settings"
-                ? "Store Settings"
-                : "Store Management"}
-            </h1>
+            <div className={styles.topHeaderLeft}>
+              <button
+                type="button"
+                className={styles.mobileMenuToggle}
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Toggle navigation menu"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
+              <h1 className={styles.pageTitle}>
+                {activeTab === "orders"
+                  ? "Order Management"
+                  : activeTab === "categories"
+                  ? "Category Management"
+                  : activeTab === "customers"
+                  ? "Customer Management"
+                  : activeTab === "settings"
+                  ? "Store Settings"
+                  : "Store Management"}
+              </h1>
+            </div>
 
             <div className={styles.headerActions}>
               <button

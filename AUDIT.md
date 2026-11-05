@@ -206,3 +206,17 @@
      - Primary Admin: `manas@gmail.com` with password `adbYVIUawo2375` (or custom overrides from `.env`).
      - Test Admin: `demo` with password `demo`.
    - Both accounts are automatically created with `Role.ADMIN` and full dashboard access.
+
+---
+
+## 8. Responsive Modern Mobile & Tablet Admin Panel
+
+- **Desktop Integrity Preserved:**
+  - Viewports wider than `950px` maintain the exact existing enterprise desktop layout: fixed 260px dark sidebar on the left, right-hand main content area, with zero hamburger or backdrop elements.
+- **Mobile & Tablet Modern Drawer Architecture (`<= 950px`):**
+  - **Slide-out Drawer:** On mobile and tablet screens, the dark sidebar transforms into an off-canvas slide-out drawer (`position: fixed; width: 280px; max-width: 84vw; height: 100dvh; z-index: 1000; transform: translateX(-100%); transition: transform 0.28s ease;`).
+  - **Backdrop Overlay:** A semi-transparent blurred backdrop (`mobileBackdrop`) mounts when the drawer is open. Tapping the backdrop or the close button (`✕`) dismisses the drawer smoothly.
+  - **Top Mobile Header Bar:** Added a hamburger menu toggle button (`☰`) next to the page title in `.topHeaderLeft` so managers can toggle the drawer at any time.
+  - **Scrollable Sidebar Content:** Added `overflow-y: auto` to `.sidebar` on mobile screens so all nested navigation groups (Dashboard, Inventory, Customers, Orders, Settings, Sign Out) can be scrolled without being clipped.
+  - **Auto-Close on Navigation & Resize:** Tapping any destination link automatically closes the mobile drawer, and expanding the window back to desktop size cleanly resets the drawer state.
+  - **Responsive Tables & Modals:** Data tables wrap in `.tableWrapper` with touch horizontal scrolling (`overflow-x: auto; min-width: 680px`), while modals and grids adapt responsively to viewport constraints.
